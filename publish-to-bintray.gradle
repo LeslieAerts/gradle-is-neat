@@ -1,0 +1,120 @@
+//Required plugins
+apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven'
+
+
+//Uploading to bintray can be a bit of a hassle; luckily, gradle can automate this entire process for us. This gradle file is copy-paste friendly;
+//Pasting this file and altering some values should be enough for you to publish to bintray in no time.
+
+//To link your package to jcenter, you need the following:
+//- .pom file
+//- jar/aar
+//- sources jar
+//- (optional) javadoc jar
+// This example contains everything to generate just that
+//Define a global project version for easy use throughout the gradle file
+String projectVersion = "1.0"
+
+//Example code for android
+android {
+    compileSdkVersion 19
+    buildToolsVersion "20.0.0"
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 21
+        versionCode 1
+        versionName projectVersion
+    }
+
+    buildTypes {
+        release {
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+//Required to rename your output file to something that uses the version number
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            output.outputFile = new File(output.outputFile.parent, output.outputFile.name.replace(".apk", "-" + defaultConfig.versionName + ".apk"))
+        }
+    }
+}
+
+//Bintray plugin configuration
+bintray {
+//The project.getProperty refers to a gradle.properties or project.properties. Project.properties is a local file and should not be committed
+//Gradle.properties usually is committed.
+//They're simple key/value pairs, so "bintray_user=Bob Saget" (without the quotes) is enough for the gradle file to parse the username.
+    user = project.hasProperty('bintray_user') ? project.getProperty('bintray_user') : ''  
+    key = project.hasProperty('bintray_apikey') ? project.getProperty('bintray_apikey') : ''
+
+    dryRun = false
+	
+	//TODO: ADD FILE COPYING HERE
+	//Publishes the files right after uploading
+    publish = true
+    pkg {
+        repo = 'repository-name' //Should be an existing repository on your bintray account
+        name = 'artifact-name' // Artifact name of your library/project.
+        desc = 'Description for your artifact' //Self explanatory. 
+        websiteUrl = 'https://github.com/leslieaerts/gradle-is-neat' //Self explanatory. 
+        issueTrackerUrl = 'https://github.com/leslieaerts/gradle-is-neat/issues' //Self explanatory. 
+        vcsUrl = 'https://github.com/leslieaerts/gradle-is-neat.git' //Self explanatory. 
+        licenses = ['Apache-2.0'] // Visit http://opensource.org/licenses for more information on what to choose
+        labels = ['cool', 'sweet', 'awesome'] //Tags used to find your project on bintray.
+        publicDownloadNumbers = true //Wether or not you want to allow publish download numbers.
+        
+		//This uploads your project to a specific version on your bintray repo
+		version {
+            name = projectVersion
+            vcsTag = projectVersion
+			//Attributes can be defined for your project. Ex. gradle-plugin for publishing to gradle-plugins repository.
+            attributes = ['gradle-plugin': 'com.foo.bar:com.foo:bar-gradle-plugin']
+        }
+    }
+}
+
+task writeNewPom << {
+    pom {
+        project {
+		//If your project is called com.twitter.twitterapp, groupId = com.twitter, artifactId = 'twitterapp'
+            groupId 'com.foo' 
+            artifactId 'bar' 
+            version projectVersion
+
+            inceptionYear '2014'
+            
+			//Some as license under bintray plugin
+			licenses {
+                license {
+                    name 'Apache 2.0'
+                    url 'http://opensource.org/licenses/aoache2.0.php'
+                    distribution 'repo'
+                }
+            }
+        }
+		
+		//Write it to an output directory
+    }.writeTo("$buildDir/outputs/aar/" + projectVersion + ".pom")
+}
+
+//Tasks to generate a sources jar and a javadoc jar
+task androidJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+}
+
+task androidJavadocsJar(type: Jar) {
+    classifier = 'javadoc'
+    from androidJavadocs.destinationDir
+}
+
+task androidSourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+}
