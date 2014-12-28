@@ -1,0 +1,71 @@
+// Automatically publishing to the Google Play store is a godsend. com.savillians.gradle:android-publisher (Also on Github) has done a great job
+// on making this possible.
+
+//Add mavencentral
+repositories {
+    mavenCentral()
+}
+//And this dependency
+dependencies {
+    classpath 'com.savillians.gradle:android-publisher:0.1'
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'android-publisher'
+
+
+// Signing your APK is key (hah! pun intended.) to publishing your app to the store. The android plugin has support for this built-in.
+
+android {
+    signingConfigs {
+        
+        //The beta flavor is optional; I'm using it to push alpha/beta versions of apps to the store.
+        beta {
+            storeFile file("./directory_to_storefile")
+            storePassword "storefilepass"
+            keyAlias "keyAlias"
+            keyPassword "keyPassword"
+        }
+
+        release {
+            storeFile file("./directory_to_storefile")
+            storePassword "storefilepass"
+            keyAlias "keyAlias"
+            keyPassword "keyPassword"
+        }
+    }
+    //Set zipAlign to true for apps going to the store
+    buildTypes {
+        debug {
+            //applicationIdSuffix ".debug"
+            signingConfig = signingConfigs.debug
+        }
+
+          beta {
+            //applicationIdSuffix ".beta"
+            signingConfig = signingConfigs.beta
+            zipAlign true
+        }
+
+        release {
+            signingConfig = signingConfigs.release
+            zipAlign true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+
+    androidPublisher {
+        applicationName = "app_name_as_it_is_in_store"
+        packageName = "package_as_it_is_in_store"
+        
+        // You need to create a service account from your developer account in the store.
+        // The service account is meant to give access to a separate account to do stuff on your developer account.
+        // It can be found under API access.
+        serviceAccountEmail = "long_email_address@developer.gserviceaccount.com"
+        serviceAccountKeyFile = file('api_file.p12')
+        track = "beta" // default, don't need to specify
+        variantName = "release" // default, don't need to specify
+    }
+}
+
+//Run with gradle task 'app:androidPublish'
