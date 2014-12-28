@@ -1,10 +1,10 @@
-neat-gradle-examples
-====================
+Gradle is neat!
+===============
 
-Collection of neat things you can do with gradle
+Collection of neat things you can do with gradle. With Gradle, you can...
 
-<h3>automatic-google-play-publish.gradle</h3>
-Automatically publish your Android app to the Google Play Store.
+<h3>publish-to-google-play.gradle</h3>
+Easily publish your Android app to the Google Play Store.
 
 <h3>publish-to-bintray.gradle</h3>
-Automatically push and publish your package to bintray.
+Easily push and publish your package to bintray.
